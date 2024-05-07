@@ -1,4 +1,4 @@
-import CollectionForm from '@/app/components/collections/CollectionForm'
+import CollectionForm from '@/components/collections/CollectionForm'
 import React from 'react'
 
 const page = () => {
