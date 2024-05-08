@@ -21,13 +21,18 @@ const Collections = () => {
       const res = await fetch("/api/collections", {
         method: "GET",
       });
+      if (!res.ok) {
+        throw new Error("Failed to fetch collections");
+      }
       const data = await res.json();
       setCollections(data);
       setLoading(false);
     } catch (err) {
-      console.log("[collections_GET]", err);
+      console.error("[collections_GET]", err);
+      setLoading(false); // Ensure loading state is updated even on error
     }
   };
+  
 
   useEffect(() => {
     getCollections();
@@ -37,10 +42,10 @@ const Collections = () => {
     <Loader />
   ) : (
     <div className="px-10 py-5">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col items-center justify-between md:flex-row">
         <p className="text-heading2-bold">Collections</p>
         <Button
-          className="bg-blue-1 text-white"
+          className="bg-blue-1 text-white mt-4 md:mt-0"
           onClick={() => router.push("/collections/new")}
         >
           <Plus className="h-4 w-4 mr-2" />
