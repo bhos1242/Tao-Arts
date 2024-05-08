@@ -1,4 +1,4 @@
-import { connectToDb } from "@/lib/mongoDB";
+import { connectToDB } from "@/lib/mongoDB";
 import { auth } from "@clerk/nextjs/server";
 import { NextRequest, NextResponse } from "next/server";
 import Collection from "@/lib/models/Collection";
@@ -10,7 +10,7 @@ export const POST = async (req: NextRequest) => {
       return new NextResponse("Unauthorized", { status: 401 });
     }
 
-    await connectToDb();
+    await connectToDB();
     const { title, description, image } = await req.json();
 
     if (!title || !description || !image) {
@@ -38,8 +38,8 @@ export const POST = async (req: NextRequest) => {
 
 export const GET = async (req: NextRequest) => {
   try {
-    await connectToDb();
-    const collections = await Collection.find().sort({ createdAt: -1 });
+    await connectToDB();
+    const collections = await Collection.find().sort({ createdAt: 'desc' });
     return new NextResponse(JSON.stringify(collections), { status: 200 });
   } catch (err) {
     console.error("[collections_GET]", err);

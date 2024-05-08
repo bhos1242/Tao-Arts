@@ -1,65 +1,92 @@
 "use client";
+
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "react-hook-form";
-import { Separator } from "@/components/ui/separator";
 import { z } from "zod";
+import { useRouter } from "next/navigation";
+
+import { Separator } from "../ui/separator";
 import { Button } from "@/components/ui/button";
 import {
   Form,
   FormControl,
-  FormDescription,
   FormField,
   FormItem,
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
-import ImageUpload from "@/components/custom ui/ImageUpload";
-import { useRouter } from "next/navigation";
+import { Textarea } from "../ui/textarea";
+import ImageUpload from "../custom ui/ImageUpload";
 import { useState } from "react";
 import toast from "react-hot-toast";
+import Delete from "../custom ui/Delete";
+
 const formSchema = z.object({
-  title: z.string().min(3).max(20),
-  description: z.string().min(10).max(500).trim(),
-  image: z.string().url(),
+  title: z.string().min(2).max(20),
+  description: z.string().min(2).max(500).trim(),
+  image: z.string(),
 });
-const CollectionForm = () => {
+
+interface CollectionFormProps {
+  initialData?: CollectionType | null; //Must have "?" to make it optional
+}
+
+const CollectionForm: React.FC<CollectionFormProps> = ({ initialData }) => {
   const router = useRouter();
+
   const [loading, setLoading] = useState(false);
 
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
-    defaultValues: {
-      title: "",
-      description: "",
-      image: "",
-    },
+    defaultValues: initialData
+      ? initialData
+      : {
+          title: "",
+          description: "",
+          image: "",
+        },
   });
 
+  const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement> | React.KeyboardEvent<HTMLTextAreaElement>) => {
+    if (e.key === "Enter") {
+      e.preventDefault();
+    }
+  }
+  
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
       setLoading(true);
-      const res = await fetch("/api/collections", {
+      const url = initialData
+        ? `/api/collections/${initialData._id}`
+        : "/api/collections";
+      const res = await fetch(url, {
         method: "POST",
-
         body: JSON.stringify(values),
       });
       if (res.ok) {
         setLoading(false);
-        toast.success("Collection Created");
+        toast.success(`Collection ${initialData ? "updated" : "created"}`);
+        window.location.href = "/collections";
         router.push("/collections");
       }
     } catch (err) {
-      toast.error("Something went wrong!! Try Again");
-      console.log("[Collections_POST]", err);
+      console.log("[collections_POST]", err);
+      toast.error("Something went wrong! Please try again.");
     }
-    console.log(values);
   };
+
   return (
     <div className="p-10">
-      <p className="text-heading2-bold">Create Collection</p>
-      <Separator className="my-4 bg-grey-1 mb-7" />
+      {initialData ? (
+        <div className="flex items-center justify-between">
+          <p className="text-heading2-bold">Edit Collection</p>
+          <Delete id={initialData._id} item="collection" />
+        </div>
+      ) : (
+        <p className="text-heading2-bold">Create Collection</p>
+      )}
+      <Separator className="bg-grey-1 mt-4 mb-7" />
       <Form {...form}>
         <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
           <FormField
@@ -69,9 +96,8 @@ const CollectionForm = () => {
               <FormItem>
                 <FormLabel>Title</FormLabel>
                 <FormControl>
-                  <Input placeholder="Title" {...field} />
+                  <Input placeholder="Title" {...field} onKeyDown={handleKeyPress} />
                 </FormControl>
-
                 <FormMessage />
               </FormItem>
             )}
@@ -83,9 +109,8 @@ const CollectionForm = () => {
               <FormItem>
                 <FormLabel>Description</FormLabel>
                 <FormControl>
-                  <Textarea placeholder="Description" {...field} rows={5} />
+                  <Textarea placeholder="Description" {...field} rows={5} onKeyDown={handleKeyPress} />
                 </FormControl>
-
                 <FormMessage />
               </FormItem>
             )}
@@ -103,6 +128,7 @@ const CollectionForm = () => {
                     onRemove={() => field.onChange("")}
                   />
                 </FormControl>
+                <FormMessage />
               </FormItem>
             )}
           />
@@ -110,7 +136,11 @@ const CollectionForm = () => {
             <Button type="submit" className="bg-blue-1 text-white">
               Submit
             </Button>
-            <Button type="button" onClick={() => router.push("./collections")}>
+            <Button
+              type="button"
+              onClick={() => router.push("/collections")}
+              className="bg-blue-1 text-white"
+            >
               Discard
             </Button>
           </div>
